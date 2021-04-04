@@ -17,4 +17,32 @@ CHIP DMux8Way {
 
     PARTS:
     // Put your code here:
+    Not(in = sel[0], out = nsel0);
+    Not(in = sel[1], out = nsel1);
+    Not(in = sel[2], out = nsel2);
+
+    And(a = nsel0, b = nsel1, out = selX00);
+    And(a = nsel0, b = sel[1], out = selX10);
+    And(a = sel[0], b = nsel1, out = selX01);
+    And( a = sel[0], b = sel[1], out = selX11);
+
+    And(a = selX00, b = sel[2], out = sel100);
+    And(a = selX00, b = nsel2, out = sel000);
+    And(a = selX10, b = sel[2], out = sel110);
+    And(a = selX10, b = nsel2, out = sel010);
+    And(a = selX01, b = sel[2], out = sel101);
+    And(a = selX01, b = nsel2, out = sel001);
+    And(a = selX11, b = sel[2], out = sel111);
+    And(a = selX11, b = nsel2, out = sel011);
+
+    And(a = in, b = sel000, out = a);
+    And(a = in, b = sel001, out = b);
+    And(a = in, b = sel010, out = c);
+    And(a = in, b = sel011, out = d);
+    And(a = in, b = sel100, out = e);
+    And(a = in, b = sel101, out = f);
+    And(a = in, b = sel110, out = g);
+    And(a = in, b = sel111, out = h);
+    
+
 }
