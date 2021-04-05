@@ -156,3 +156,60 @@
 
     * Recommended chip-building procedure:
         ![](/image/project1gates.png)
+
+
+
+
+
+
+
+
+
+
+# Week 2
+
+1. Binary Numbers
+   * For $N$ bits, there are $2 ^N$ possible binary numbers
+   * Convert a binary number to decimal number: $\sum\limits_{k=0}^{n} {2^k}$, where $k \in \{0, 1\}$
+   * Convert a decimal number to decimal number: $\sum\limits_{t=0}^{n} {2^{k_t}} = Number$, then binary representation of the decimal number is: ${k_n}...{k_0}$
+   * LSB(least significant number): the right-most bit in the binary representation of a number, a.k.a., hight-order bit
+   * MSB(most significant number): the left-most bit in the binary representation of a number, a.k.a., low-order bit
+   * Usually the MSB is used for sign, i.e., `MSB = 0` means a positive number, `MSB = 1` means a negative number
+   
+2. Binary Addition:
+   * If $sum < 2, \; position \; result = sum$, 
+  
+      if $sum \geq 2, \; position \; result = sum \;\%\; 2,\; next \; position \; carry = 1$
+   * Overflow problem: since the computer has limited word size(the amount of bits to hold a number), if the calculation is beyond that, then the result is truncated in the following way: $\; result = result \;\%\; word \; size$, where $word \; size = 2^{N-1}$, since MSB is used for the sign of a number
+   * Half adder: add two bits without considering possible position carry 
+   * Full adder: add two bits with position carry taken into consideration
+   * Adder: add two numbers
+
+3. Negative numbers:
+   * Sign bit: if one uses this representation, then `1000` should not be -0, it should be -8. In this way, given the total word size $N$, the range is $[0, 2^{N-1}-1] \; and \; [-2^{N-1}, -1]$
+   * 2's Complement: the binary representation for $-K$ is the binary representation for $2^{N} - K$, given the total word size $N$. In this way, the range is also $[0, 2^{N-1}-1] \; and \; [-2^{N-1}, -1]$
+     * There is truncation for $2^{N} - K$ if the binary representation is beyond the word size $N$
+   * Compute $-X$: then wen can compute $x - y$ by using $x + (-y)$
+
+4. Arithmetic Logic Unit(ALU):
+   * Von Neumann Architecture:
+   ![](/images/VonNeumann.png)
+   * The ALU computes a function on two inputs, and outputs the result. The function includes a family of pre-defined arithmetic and logical functions.
+   * The Hack ALU:
+     * Two 16-bit, 2's complement inputs, one 16-bit, 2's complement output
+     * One function selected using 6 1-bit inputs from a 18-function family. The 6 1-bit inputs are:
+         * `zx`: if `zx = 1`, then `x = 0`
+         * `nx`: if `nx = 1`, then `x = !x`
+         * `zy`: if `zy = 1`, then `y = 0`
+         * `ny`: if `ny = 1`, then `y = !y`
+         * `f`: if `f = 1`, then `out = x + y`, if `f = 0`, then `out = x & y`
+         * `no`: if `no = 1`, then `out = !out`
+  
+   ![](/images/ALUFunction.png)
+     * Also two 1-bit outputs:
+       * `zr`: if `out == 0`, then `zr = 1`, else `zr = 0`
+       * `ng`: if `out < 0`, then `ng = 1`, else `ng = 0`
+     * The hack ALU is simple, elegant and easy to implement
+  
+  5. Project 2
+      ![](/images/project2.png)
