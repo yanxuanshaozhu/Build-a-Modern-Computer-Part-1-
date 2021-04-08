@@ -28,8 +28,5 @@ CHIP PC {
 
     Or(a = inc, b = load, out=incOrLoad);
     Or(a = reset, b = incOrLoad, out = control);
-    
-
-
-    
 }
+
