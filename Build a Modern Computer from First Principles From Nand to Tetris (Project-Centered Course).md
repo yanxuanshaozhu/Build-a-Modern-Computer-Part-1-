@@ -238,7 +238,7 @@
          state[t + k] = v, 
          out[t + k] = v, for any k unless a new load is set to 1.
          ```
-    
+   
    * RAM unit:
      * RAM Unit:
       ![](/images/Nand/RAMUnit.png)
@@ -260,7 +260,7 @@
      * The the state of the register becomes v and from the next cycle onward, `out = v` for the RAM unit
      
    * A family of 16-bit RAM chips:
-    
+   
        | chip name |   n   |  k   |
        | :-------: | :---: | :--: |
        |   RAM8    |   8   |  3   |
@@ -285,4 +285,200 @@
 
 5. Project 3
    ![](/images/Nand/Project3.png)
+
+
+
+
+
+
+# Week 4
+
+1. Machine Languages: Overview
+   * Theoretical universal turing machine: one machine can do many tasks. Actual general computing machine: von Neumann Architecture
+   * Compilation: high-level language => Compiler => machine language => CPU
+   * Assembler can translate assembly language into machine language
+
+2. Machine Languages: Elements
+   * Machine language specifies the hardware/software interface, it's usually in close correspondence to actual hardware architecture, and as is often the case, the more operations supported by a machine language, the more sophisticated the machine language is
+   * Machine Operations:
+     * Arithmetic operations: add, subtract, ...
+     * Logical operations: and, or, ...
+     * Flow control: goto, if then goto, ...
+   * Addressing:
+     * Accessing a memory location is expensive, because it needs to supply a long address and getting the memory contents into the CPU also takes time
+     * Solution to the above problem is memory hierarchy: register => cache => main memory => disk. The closer to CPU, the smaller in size of the memory.
+     * Data Registers: Add R1, R2; Address Registers: Store R1, @A
+     * Addressing modes: register, direct, indirect, immediate
+   * Input/Output:
+     * Devices: keyboard, mouse, camera, sensor, printer, screen, ...
+     * CPU needs protocol to talk to them. Software drivers know the protocols. An general method of interaction uses memory mapping
+   * Flow Control:
+     * Usually CPU executes machine instructions in sequence, sometimes we need jump to somewhere. There is both unconditional jump and conditional jump.
+
+3. The Hack Computer and Machine Language
+   * Hack Computer Hardware:
+     * Data memory(RAM): a sequence of 16-bit registers
+     * Instruction memory(ROM): a sequence of 16-bit registers
+     * Central Processing Unit(CPU): performs 16-bit instructions
+     * Instruction bus/data bus/address buses
+   * Hack Computer Software:
+     * Hack machine language:16-bit A-instructions, 16-bit C-instructions
+     * Hack program: sequence of instructions written in the Hack machine language
+   * Control:
+     * The ROM is loaded with a Hack program
+     * The reset button is pushed
+     * The program starts running
+   * Registers:
+     * D register in CPU: holds a 16-bit value of data
+     * A register in CPU: holds a 16-bit value of data or address
+     * M register in RAM: represents the 16-bit RAM register addressed by A, `M = RAM[A]`
+   * The A-instruction:
+     * Syntax: `@value`, a value is a non-negative decimal constant or a symbol referring to such a constant
+     * Meaning: sets the A register to value, `RAM[A]` becomes the selected RAM register M
+   * The C-instruction:
+     * `dest = comp; jump` (both dest and jump are optional)
+         ![](/images/Nand/Comp.png)
+         ![](/images/Nand/Dest.png)
+         ![](/images/Nand/Jump.png)
+     * Meaning: computes the value of `comp`, stores the result in `dest`, if the boolean expression `(comp jump 0)` is true, jumps to execute the instruction stored in `ROM[A]`
+      ```asm
+      // Set the D register to -1
+      D = -1
+
+      //Set RAM[300] to the value of the D register minus 1
+      @300            //A = 300
+      M = D - 1      // R[300] = D - 1
+
+      // If (D - 1 == 0) jump to execute the instruction stored in ROM[56]
+      @56             //A = 56
+      D - 1;JEQ       //if(D - 1 == 0) goto 56
+
+      ```
+
+4. Hack Language Specification
+   * Two ways to express the same expression:
+     * Binary code
+     * Symbolic language
+   * The A-instruction:
+     * Symbolic syntax: `@ value`, value is a non-negative decimal constant $\leq 2^{15} - 1$ or a symbol referring to such a constant
+     * Binary syntax: `0 value`, value is a 15-bit binary number
+   * The C-instruction:
+     * Symbolic syntax: `dest = comp; jump`
+     * Binary syntax: `1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3`
+       * The first `1`: the op code for c-instruction
+       * The second and third `1`: not used
+       * `a c1 c2 c3 c4 c5 c6`: comp bits
+       * `d1 d2 d3`: dest bits
+       * `j1 j2 j3`: jump bits
+
+      ![](/images/Nand/C-InstructionBinary.png)
+
+5. Input/Output
+   *  Peripheral I/O devices:
+      *  Keyboard: used to enter inputs
+      *  Screen: used to display outputs
+   *  High-level approach: sophisticated software libraries enabling text, graphics, animation, audio, video, etc.
+   *  Low-level: bits
+   *  Output Using Screen Memory Map:
+      *  A screen memory map is a designated memory area in RAM, it's dedicated to manage a display unit. The physical unit is refreshed many times per second.
+      *  The screen memory map is a sequence of 16-bit values(each value is called a word) with length of 8192. And the display unit is a 256 by 512(b/w) table, each element is a pixel that can be turned on or off. So each bit is matched with a pixel. ($16 * 8192 = 256 * 512$). Each 32 rows in the screen memory map is mapped to one row in the physical display unit. ($16 * 32 = 512 $)
+      *  Set the `(row, col)` pixel on/off:
+         *  Find the word: the word should be at `32 * row + col /16`(here / is integer division) in the memory map. If the first word(indexed with 0) is at `RAM[n]`, the the target word is at `RAM[n + 32 * row + col / 16]`.
+         *  Find the bit: in the word, the bit is at `col % 16`, set the bit to 0/1.
+         *  Commit the change to RAM
+   * Input Using Keyboard Memory Map:
+     * A keyboard memory map is a single 16-bit register called keyboard in RAM, it can manage a physical keyboard.
+     * When a key is pressed, its scan code appears in the keyboard memory map as a 16-bit value.
+     * Check which key is currently pressed:
+          * Probe the contents of the keyboard chip.
+          * In the Hack computer, probe the contents of `RAM[24576]`. If the register contains 0, no key is pressed at present.
    
+    
+   
+   ​	 ![](/images/Nand/KeyboardMemoryMap.png)
+   
+6. Hack Programming
+     * Working with registers and memory
+       * Basics: 
+          ```asm
+          // D = 10
+          @ 10                  // Set A to 10
+          D = A
+
+          // D ++
+          D = D + 1
+
+          // D = RAM[17]
+          @ 17                 // Select the register at RAM[17]
+          D = M
+
+          // RAM[17] = D
+          @ 17
+          M = D
+
+          // RAM[17] = 10    
+          @ 10                
+          D = A                // Acquire the constant and store into D                 
+          @ 17
+          M = D
+
+          // RAM[5] = RAM[3]
+          @ 3
+          D = M              // Acquire the value and store into D
+          @ 5
+          M = D
+          ```
+       * Example : add two numbers
+          ```asm
+          // RAM[2] = RAM[0] + RAM[1]
+          @ 0
+          D = M       // D = RAM[0]
+          @ 1
+          D = D + M   // D = D + RAM[1]
+          @ 2
+          M = D       // RAM[2] = D
+          ```
+        * Terminate a program properly
+          * The above program is not safe, because it doesn't end properly. Someone could add malicious code after the above code to do something bad or dangerous, this is called NOP slide. NOP slide is a sequence of NOP(non-operational) instructions intended to slide the CPU's instruction execution flow to its final, desired destination whenever the program branches to a memory address anywhere on the slide.
+          * One can add an infinite loop to end a program:
+              ```asm
+              @ value
+              0; JMP
+              ```
+        * Built-in symbols: 
+          * Symbol `Rn` has value `n` for n in 0, ... ,15. Use these symbols rather than numbers when referring the first 16 registers in your code so it's more readable.
+          * `SCREEN` has value 16384, used for screen output
+          * `KBD` has value 24576, used for keyboard input
+          * `SP` has value 0
+          * `LCL` has value 1
+          * `ARG` has value 2
+          * `THIS` has value 3
+          * `THAT` has value 4
+       
+      * Branching
+        * Definition: evaluate a Boolean expression and go to different sections afterwards based on the result. There is only one branching apparatus in machine language called goto.
+        * Example: 
+          ```asm
+          // if R0 > 0
+                 R1 = 1
+             else
+                 R1 = 0
+
+          @ R0
+          D = M    // D = RAM[0]
+
+          @ 17
+          D; JET   // if R0 > 0, goto 17
+
+          @ R1
+          M = 0    // R[1] = 0
+          @ 19
+          0; JMP   // end of program
+
+          @ R1
+          M = 1   // R[1] = 1
+          @ 19
+          0; JMP  // end of program
+
+          ```
+        
