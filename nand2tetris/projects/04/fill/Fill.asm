@@ -12,3 +12,40 @@
 // the screen should remain fully clear as long as no key is pressed.
 
 // Put your code here.
+
+(LOOP)
+@ 8192
+D = A
+@ I
+M = D             //n = 8192, size of the screen, which is 24576 - 16384
+
+@ KBD
+D = M
+
+@ WHITEN         // if not pressed, whiten the screen
+D; JEQ
+
+@ BLACKEN        // if pressed, blacken the screen
+0;JMP
+
+(END)
+@ END
+0; JMP
+
+(BLACKEN)
+
+
+(WHITEN)
+@ SCREEN
+D = M
+@ LOOP
+D; JEQ
+@ i
+M = M - 1
+@ SCREEN
+D = A
+@ i
+A = D + M
+M = 0
+@ END
+0; JMP

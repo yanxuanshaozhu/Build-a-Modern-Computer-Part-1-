@@ -10,3 +10,55 @@
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
 // Put your code here.
+// R2 = R0 * R1
+
+// Pseudo Code
+// n = R1
+// i = 1
+// sum = 0
+//LOOP:
+// if i > n goto STOP
+// sum = sum + R0
+// i = i + 1
+// goto LOOP
+//STOP:
+// R1 = sum
+
+@ R1
+D = M
+@ n
+M = D         //n = R1
+@ i
+M = 1         // i = 1
+@ sum
+M = 0         // sum = 0
+
+(LOOP)
+@ i
+D = M
+@ n
+D = D - M
+@STOP
+D; JGT       // if i > n goto STOP
+
+@ sum
+D = M
+@ R0
+D = D + M
+@ sum
+M = D       // sum = sum + R0
+@ i
+M = M + 1   // i = i + 1
+@ LOOP
+0; JMP
+
+(STOP)
+@ sum
+D = M
+@ R2
+M = D       // RAM[2] = sum
+
+(END)
+@ END
+0; JMP
+
