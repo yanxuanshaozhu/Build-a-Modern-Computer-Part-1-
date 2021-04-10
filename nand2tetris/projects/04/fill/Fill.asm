@@ -13,39 +13,61 @@
 
 // Put your code here.
 
-(LOOP)
-@ 8192
+@ 24575
 D = A
-@ I
-M = D             //n = 8192, size of the screen, which is 24576 - 16384
+@ R0
+M = D                     // R[0] = 24575, the address of keyboard
 
+@ SCREEN
+D = A
+@ R1
+M = D                     // R[1] = 16384, the current position, starting from 16384, ending at 24575, so the size is 8192, which is the size of the screen
+
+(LOOP)
 @ KBD
-D = M
+D = M                    // if D = 0, then no pressed key, then whiten, else blacken
 
-@ WHITEN         // if not pressed, whiten the screen
+@ WHITEN
 D; JEQ
 
-@ BLACKEN        // if pressed, blacken the screen
-0;JMP
+@ BLACKEN
+0; JMP
 
-(END)
-@ END
+(WHITEN)
+@ SCREEN                
+D = A
+@ R1
+D = D - M
+@ LOOP
+D; JGT                     // if the screen is all white, stop the loop
+
+@ R1
+D = M
+A = M
+M = 0
+
+@ R1
+M = D - 1
+
+@ LOOP
 0; JMP
 
 (BLACKEN)
-
-
-(WHITEN)
-@ SCREEN
+@ R0
 D = M
-@ LOOP
-D; JEQ
-@ i
-M = M - 1
-@ SCREEN
-D = A
-@ i
-A = D + M
-M = 0
-@ END
-0; JMP
+@ R1
+D = D - M
+@LOOP
+D;JLT                    // if the screen is all black, stop the loop
+
+@ R1
+D = M
+A = M
+M = -1
+
+
+@ R1
+M = D + 1
+
+@LOOP
+0;JMP
