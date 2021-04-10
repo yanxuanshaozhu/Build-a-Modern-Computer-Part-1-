@@ -454,15 +454,16 @@
           * `ARG` has value 2
           * `THIS` has value 3
           * `THAT` has value 4
-       
-      * Branching
-        * Definition: evaluate a Boolean expression and go to different sections afterwards based on the result. There is only one branching apparatus in machine language called goto.
-        * Example: 
-          ```asm
+  
+     * Branching
+       * Definition: evaluate a boolean expression and go to different sections afterwards based on the result. There is only one branching apparatus in machine language called goto.
+       * Example: 
+         * Original code:
+        ```asm
           // if R0 > 0
-                 R1 = 1
-             else
-                 R1 = 0
+                R1 = 1
+            else
+                R1 = 0
 
           @ R0
           D = M    // D = RAM[0]
@@ -479,6 +480,121 @@
           M = 1   // R[1] = 1
           @ 19
           0; JMP  // end of program
+        ```
+          * Labeled code:
+          ```asm
+            // if R0 > 0
+                  R1 = 1
+              else
+                  R1 = 0
 
+            @ R0
+            D = M    
+
+            @ POSITIVE          // Use a label, it equals to @ n, n is the instruction number following the (label) declaration. Here equals to @ 18
+            D; JET   
+
+            @ R1
+            M = 0              // R[1] = 0
+            @ END              // Use a label, here equals to @ 22
+            0; JMP   
+
+            (POSITIVE)         // Declare a label, label declaration is not translated into machine code, it's like a placeholder
+            @ R1
+            M = 1
+          
+            (END)
+            @ END
+            0; JMP
+       
           ```
-        
+
+     * Variables
+       * A variable is a container that has a name and a value. In hack language, there is only one variable type, the 16-bit values.
+       * Example
+          ```asm
+          // Exchange the values of RAM[0] and RAM[1]
+          // temp = R1
+          // R1 = R0
+          // R0 = temp
+          
+          @ R1
+          D = M
+          @ temp  // Find an available memory register(say register n), use it to represent the variable temp. From now on, @ temp equals to @ n.
+          M = D
+
+          @ R0
+          D = M
+          @ R1
+          M = D
+
+          @ temp
+          D = M
+          @ R0
+          M = D
+
+          (END)
+          @ END
+          0; JMP
+          ```
+          
+     * Iteration
+       * Example:
+        ```asm
+        // Computer RAM[1] = 1 + 2 + ... + n
+        // Put a number (n) in RAM[0]
+            @ R0
+            D = M
+            @ n
+            M = D         //n = R0
+            @ i
+            M = 1         // i = 1
+            @ sum
+            M = 0         // sum = 0
+
+            (LOOP)
+            @ i
+            D = M
+            @ n
+            D = D - M
+            @STOP
+            D; JGT       // if i > n goto STOP
+
+            @ sum
+            D = M
+            @ i
+            D = D + M
+            @ sum
+            M = D       // sum = sum + i
+            @ i
+            M = M + 1   // i = i + 1
+            @ LOOP
+            0; JMP
+
+            (STOP)
+            @ sum
+            D = M
+            @ R1
+            M = D       // RAM[1] = sum
+
+            (END)
+            @ END
+            0; JMP
+        ```
+       * Best practices:
+         * Design your program using pseudo code
+         * Write the program in an assembly language
+         * Test the program using a variable-value trace table
+    * Pointers
+      * For an array, memory stores its start address and the length
+      * Variables that store memory addresses are called pointers
+      * Hack pointer logic: whenever we have to access memory using a pointer, we need an instruction like `A = M`, which sets the address register to the content of a memory register
+
+    * Input/Output
+      * Hack RAM:
+        * 0-16383: 16k data memory
+        * 16384-24575: 8k screen memory map
+        * 26576: keyboard 
+  
+7. Project 4
+  ![](/images/Nand/Project4.png)
