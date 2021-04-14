@@ -454,7 +454,7 @@
           * `ARG` has value 2
           * `THIS` has value 3
           * `THAT` has value 4
-  
+    
      * Branching
        * Definition: evaluate a boolean expression and go to different sections afterwards based on the result. There is only one branching apparatus in machine language called goto.
        * Example: 
@@ -537,7 +537,7 @@
           @ END
           0; JMP
           ```
-          
+       
      * Iteration
        * Example:
         ```asm
@@ -597,4 +597,240 @@
         * 26576: keyboard 
   
 7. Project 4
-  ![](/images/Nand/Project4.png)
+    ![](/images/Nand/Project4.png)
+
+
+
+
+
+# Week 5
+
+1. Von Neumann Architecture
+
+    * The architecture:
+        * CPU: ALU, registers
+        * Memory: data memory, program memory 
+        * Wire/bus: data wires, address wires, control wires
+    * ALU wires:
+        * Data wires: get data and output data
+        * Control wires: get executions and tell other parts what to do
+    * Register wires:
+        * Data wires: get dat and output data
+        * Address wires: some registers can specify addresses
+    * Memory wires:
+        * Address wires: specify memory addresses
+        * Data wires: input and output data
+        * Control wires: interact with executions in the program memory
+
+2. The Fetch-Execute Cycle
+
+    * Fetch: fetch an instruction from the program memory
+        * Put the location of the next instruction into the address of the memory using program counter
+        * Get the instruction code itself by reading the memory contents at the location
+    * Execute: execute the instruction from the fetch part
+        * Put the instruction bits into control wires and tell other parts what to do
+        * Executing procedure also involves accessing data memory 
+    * A problem: in the fetch process, we need to put into the memory the instruction, but in the execute process, we need to put into the memory the data. If there is only one memory for both data and program, in order to avoid the clash, we need to use a multiplexer.
+        ![](/images/Nand/FetchExecuteMultiplexer.png)
+    * Simpler solution: Harvard Architecture
+        * A variant of Von Neumann Architecture
+        * Keep program and data in two separate memory modules so complication is avoided
+
+3. Central Processing Unit
+
+    * The abstraction: a 16-bit processor, designed to execute the current instruction and figure out which instruction to execute next
+
+    * Hack CPU interface:
+
+        * Inputs: data value, instruction, reset bit
+        * Outputs: data value, data value write memory address(where to write), load bit(write to memory, yes or no), pc(address of next instruction)
+
+    * Hack CPU implementation
+        ![](/images/Nand/HackCPU.png)
+
+    * Instruction handling:
+
+        * Handling A instruction:
+            ![](/images/Nand/AInstructionHandling.png)
+            * Decodes the instruction into op-code + 15-bit value
+            * Stores the value in the A register
+            * Outputs the value
+        * Handling C instruction:
+            ![](/images/Nand/CInstructionHandling.png)
+            * Decodes the instruction into Op-code, ALU control bits, Destination load bits and Jump bits
+            * Use the different fields in later steps
+
+    * ALU operations:
+        ![](/images/Nand/ALUOperation.png)
+
+        * Data inputs: from the D register , from the A register/M register
+        * Control inputs: control bits from the instruction
+        * ALU data outputs: result of ALU calculation, fed simultaneously to D register, A register and M register. The three destination bits determine which register actually receive the incoming value.
+
+    * Control:
+        ![](/images/Nand/Control.png)
+
+        * Reset is used to start a loaded program  
+
+        * PC: 
+
+            * Emits the address of the next instruction. 
+            * To start/restart the program's execution: `PC = 0`.
+            * No jump: `PC++`
+            * Goto: `PC = A`
+            * Conditional goto: `if true then PC = A else PC++`
+            * PC logic:
+
+             ```
+             if (reset == 1) {
+               PC = 0;
+             } else {
+               // current instruction code
+               load = f(jump bits, ALU control outputs);
+               if (load == 1) {
+                 PC = A;
+               } else {
+                 PC ++;
+               }
+             }
+             ```
+
+4. The Hack Computer
+
+    * Abstraction: it's a computer that is capable of running programs written in the Hack machine language. It's built upon the Hack chip set.
+    * Hack CPU operation: executes instruction according to the Hack language specification
+        * If includes D and A then read from/write into D register and A register
+        * If include @ x, then x is stored into A register and value is emitted by M register
+        * If RHS includes M, then value is read from M
+        * If LHS includes M, then ALU output is emitted by M
+    * Data Memory(RAM):
+        * Address 0 to 16383 is data memory, RAM is implemented using a 16-bit 16K RAM chip
+        * Address 16384 to 24575 is screen memory map, screen is implemented using a built-in 8K chip featuring a raster display refresh side-effect
+        * Address 24576 is keyboard memory map, keyboard is implemented using a built-in chip featuring a keyboard capture side-effect
+    * Reset button
+    * Instruction Memory(ROM)
+        * Implemented using the ROM32K chip
+        * Run a program on the Hack computer:
+            * Load the program into the ROM using plug-and-play ROM chips or using hardware simulation with text-file programs
+            * Press reset button
+            * The program starts running
+                ![](/images/Nand/HackComputerImplementation.png)
+
+5. Project 5
+
+    * Hardware Projects:
+        ![](/images/Nand/HardwareProjects.png)
+
+
+
+# Week 6
+
+1. Assembly Languages and Assemblers
+    * Assembly language program => Assembler => Machine language program => Hack computer
+    * Basic assembler logic:
+        * Repeat:
+            * Read the next assembly language command, i.e., read next line ignoring whitespace
+            * Break it into the different fields of which it is composed
+            * Lookup the binary code for each field
+            * Combine theses codes into a single machine language command
+            * Output this machine language command
+        * Until EOF reached
+        * Symbols should be replaced with their addresses in the program, so the assembler needs to maintain a symbol-address table.
+            * For a variable, add it to the table if it is not in the label, otherwise simply look it up in the table
+            * For a label, it could use forward reference, which means one can refer to a label before it is declared. There are two ways to deal with forward reference, the first is to leave blank until label declaration appears and then fix; the second is run the program for 2 times, add each label into the table for the first pass, and run other parts for the second pass.
+
+2. The Hack Assembly Language 
+    * Language:
+        * A-instruction
+        * C-instruction
+        * Symbols
+    * Assembler:
+        * Basic one: translate symbol-less Hack program
+        * Advanced one: able to handle symbols
+
+3. The Assembly Process-Handling Instructions
+    * Translating A-instructions `@ value`
+        * If the value is a decimal constant, generate the equivalent 15-bit binary constant
+        * If the value is a symbol, later in the advanced assembler
+    * Translating C-instructions `dest = comp; jump`
+        * The binary form is simply `1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3`
+    * The overall assembly logic: 
+        * For each instruction:
+            * Parse the instruction: break it into its underlying fields
+            * A-instruction: translate the decimal value into a binary value
+            * C-instruction: for each field in the instruction, generate the corresponding binary code
+            * Assemble the translated binary codes into a complete 16-bit machine instruction
+            * Write the 16-bit instruction to the output file
+
+4. The Assembly Processing-Handling Symbols
+    * Symbols:
+        * Variable symbols: represent memory locations where the programmer wants to maintain values
+        * Label symbols: represent destinations of goto instructions
+        * Pre-defined symbols: represent special memory locations
+    * Pre-defined symbols:
+        * Hack language has 23 pre-defined symbols that are only used in A-instructions
+        * Simply replace the symbols with is values
+    * Label Symbols:
+        * Replace the symbols with the address next to is declaration
+    * Variable Symbols:
+        * A symbol that is not a pre-defined symbol and not a label is called a variable, each variable is assigned with a unique memory address
+        * If a variable appears for the first time, assign a unique memory address for it. If not, replace it with the assigned memory address
+    * Symbol Table:
+        * Create an empty symbol table, and add all pre-defined symbols into the table
+        * Scan the whole program, this procedure is called the first pass. Add all labels into the table during the process
+        * Scan the whole program again, and add all variable symbols
+        * To resolve a symbol, look up its value in the symbol table
+    * The Assembly Process:
+        * Initialization：
+            * Construct an empty symbol table
+            * Add the pre-defined symbols to the symbol table
+        * First pass:
+            * Scan the program
+            * For each instruction of the form `(XXX)`, add the pair `(xxx, address)` to the symbol table, where the address is the number of the instruction following `(XXX)`
+        * Second pass:
+            * Scan the program
+            * For A-instruction `@ symbol`, if the `(symbol, value)` is found, replace symbol with value. If not, add `(symbol, address)` to the symbol table, use address in instruction's translation, check next instruction
+            * For C-instruction, replace it with the translation
+            * Write the translated instruction into the output file
+
+5. Developing a Hack Assembler
+    * Sub-tasks that need to be done:
+        * Reading and parsing commands
+        * Converting mnemonics to code
+        * Handling symbols using the symbol table
+    * Reading and parsing commands
+        * Start reading a file with given name
+            * Constructor for a Parser object that accepts a string specifying a file name
+            * Need to know how to read text files
+        * Move to the next command in the file
+            * Detect if there are more instructions
+            * Get the next command
+            * Need to read one line at a time
+            * Need to skip whitespace including comments
+        * Get the fields of the current command
+            * Know the type of the current command
+            * Easy access to the fields
+    * Translating Mnemonic to code
+        * The way to translate A-instruction, C-instruction and symbols into binary code has already been discussed earlier
+    * The symbol table
+        * The symbol translating has already been discussed earlier
+
+6. Project 6
+    * The Hack Assembler
+        * Contract:
+            * HackAssembler: translates Hack assembly program into executable Hack binary code
+            * Source program is in a text file named `xxx.asm`
+            * Generated code is written into a text file named `xxx.hack`
+            * Assumption: `xxx.asm` is error-free
+        * Usage:
+            * `java HackAssembler xxx.asm`
+            * The above command should create `xxx.hack` file
+        * Software architecture
+            * Parser: unpacks each instruction into its underlying fields
+            * Code: translates each field into its corresponding binary value
+            * SymbolTable: manages the symbol table
+            * Main: initializes the I/O files and drives the process
+        * Staged development
+            * Develop a basic assembler that translates assembly programs without symbols
+            * Develop an ability to handle symbols
+            * Morph the basic assembler into an assembler that can translate any assembly program
