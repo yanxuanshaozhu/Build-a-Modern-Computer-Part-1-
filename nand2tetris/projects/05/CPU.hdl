@@ -40,4 +40,65 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    // 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
+    // [15]: C= 1,A = 0
+    // [14], [13]: useless
+    // [12] - [6]: comp
+    // [12]: a
+    // [11]: c1
+    // [10]: c2
+    // [9]: c3
+    // [8]: c4
+    // [7]: c5
+    // [6]: c6
+    // [5] - [3]: dest
+    // [5]: d1. If d1= 1, then A
+    // [4]: d2. If d2 = 1, then D
+    // [3]: d3. If d3 = 1, then M/RAM[A]
+    // [2] - [0]: jmup
+    // [2]: j1. If j1 = 1, then JLT
+    // [1]: j2. If j2 = 1, then JEQ
+    // [0]: j3. If j3 = 1, then JGT
+
+    Not(in = instruction[15], out = instructionA);
+    And(a = instruction[15], b = true, out = instructionC);
+
+    Mux16(a = instruction, b = ALUOut, sel = instruction[15], out = inAReg);
+
+    Or(a = instructionA, b = instruction[5], out = loadAReg);
+    ARegister(in = inAReg, load = loadAReg, out = outAReg, out[0..14] = addressM);
+
+    Mux16(a = outAReg, b = inM, sel = instruction[12], out = outMux16);
+    
+    And(a = instructionC, b = instruction[3], out = writeM);
+
+    And(a = instructionC, b = instruction[4], out = loadDReg);
+    DRegister(in = ALUOut, load = loadDReg, out = outDReg);
+
+    And(a = instructionC, b = instruction[11], out = c1);
+    And(a = instructionC, b = instruction[10], out = c2);
+    And(a = instructionC, b = instruction[9], out = c3);
+    And(a = instructionC, b = instruction[8], out = c4);
+    And(a = instructionC, b = instruction[7], out = c5);
+    And(a = instructionC, b = instruction[6], out = c6);
+
+    ALU(x = outDReg, y = outMux16, zx = c1, nx = c2, zy = c3, ny = c4, f = c5, no = c6, out = ALUOut, out = outM, zr = zr, ng = ng);
+
+    And(a = instructionC, b = instruction[2], out = outJLT);
+    And(a = instructionC, b = instruction[1], out = outJEQ);
+    And(a = instructionC, b = instruction[0], out = outJGT);
+
+    And(a = ng, b = outJLT, out = LTJump);
+    And(a = zr, b = outJEQ, out = EQJump);
+
+    Not(in = ng, out = notNg);
+    Not(in = zr, out = notZr);
+    And(a = notNg, b = notZr, out = outGT);
+    
+    And(a = outGT, b = outJGT, out = GTJump);
+
+    Or(a = LTJump, b = EQJump, out = NGTJump);
+    Or(a = NGTJump, b = GTJump, out = jump);
+
+    PC(in = outAReg, load = jump, inc = true, reset = reset, out[0..14] = pc);
 }
